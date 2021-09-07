@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+
 const Router = require("express").Router;
 const router = new Router();
 
@@ -15,16 +16,17 @@ const ExpressError = require("../expressError");
 router.post("/login", async (req, res, next) => {
   try {
     const { username, password } = req.body;
+    // find user in db by authenticating
     const user = await User.authenticate(username, password);
 
     if (user) {
-      if ((await bcrypt.compare(password, user.password)) === true) {
-        const token = jwt.sign({ username }, SECRET_KEY);
-        User.updateLoginTimestamp(username);
-        return res.json({ message: "User Authenticated.", token });
-      }
+      // create JWT
+      const token = jwt.sign({ username }, SECRET_KEY);
+      // update last_login_at of user
+      User.updateLoginTimestamp(username);
+      // return the JWT
+      return res.json({ message: "User Authenticated.", token });
     }
-
     throw new ExpressError("Invalid user/password", 400);
   } catch (err) {
     return next(err);
